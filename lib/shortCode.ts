@@ -1,10 +1,17 @@
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-export function generateShortCode(length = 6): string {
-  let result = "";
+export function encodeBase62(num: number): string {
+  if (num === 0) {
+    return chars[0];
+  }
 
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
+  let result = "";
+  let n = num;
+
+  while (n > 0) {
+    const remainder = n % chars.length;
+    result = chars[remainder] + result;
+    n = Math.floor(n / chars.length);
   }
 
   return result;

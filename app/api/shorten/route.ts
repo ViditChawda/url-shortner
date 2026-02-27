@@ -1,7 +1,7 @@
 // app/api/shorten/route.ts
 
 import { NextResponse } from "next/server";
-import { generateShortCode } from "@/lib/shortCode";
+import { encodeBase62 } from "@/lib/shortCode";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -23,27 +23,17 @@ export async function POST(req: Request) {
       );
     }
 
-    let shortCode = generateShortCode();
-
-    // ensure unique
-    let existing = await prisma.url.findUnique({
-      where: { shortCode },
-    });
-
-    while (existing) {
-      shortCode = generateShortCode();
-      existing = await prisma.url.findUnique({
-        where: { shortCode },
-      });
-    }
-
-    console.log("shortCode", shortCode);
-
-    const newUrl = await prisma.url.create({
+    const created = await prisma.url.create({
       data: {
-        shortCode,
         longUrl,
       },
+    });
+
+    const shortCode = encodeBase62(created.id);
+
+    const updated = await prisma.url.update({
+      where: { id: created.id },
+      data: { shortCode },
     });
 
     const baseUrl =
@@ -55,7 +45,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       shortUrl,
-      data: newUrl,
+      data: updated,
     });
   } catch (err) {
     console.error("[POST /api/shorten]", err);

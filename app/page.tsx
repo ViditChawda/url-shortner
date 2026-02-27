@@ -14,6 +14,8 @@ export default function Home() {
     setError("");
     setShortUrl("");
 
+    console.log("url", url);
+
     try {
       const res = await fetch("/api/shorten", {
         method: "POST",
@@ -53,23 +55,6 @@ export default function Home() {
     }
   };
 
-  const handleSeed = async () => {
-    setSeedMessage("");
-    setSeedLoading(true);
-    try {
-      const res = await fetch("/api/seed", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setSeedMessage(data?.error ?? data?.message ?? "Failed to seed");
-        return;
-      }
-      setSeedMessage(data?.message ?? "Dummy data added.");
-    } catch (err) {
-      setSeedMessage(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setSeedLoading(false);
-    }
-  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -93,18 +78,7 @@ export default function Home() {
           Shorten URL
         </button>
 
-        <button
-          type="button"
-          onClick={handleSeed}
-          disabled={seedLoading}
-          className="w-full mt-3 border border-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-        >
-          {seedLoading ? "Seeding…" : "Seed dummy data"}
-        </button>
-
-        {seedMessage && (
-          <p className="mt-3 text-sm text-center text-gray-600">{seedMessage}</p>
-        )}
+        
         {error && (
           <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
         )}

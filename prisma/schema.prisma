@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -9,8 +9,8 @@ datasource db {
 }
 
 model Url {
-  id        String   @id @default(uuid())
-  shortCode String   @unique
+  id        Int      @id @default(autoincrement())
+  shortCode String?  @unique
   longUrl   String
   userId    String?
   createdAt DateTime @default(now())
