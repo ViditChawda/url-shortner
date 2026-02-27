@@ -5,30 +5,76 @@ import { useState } from "react";
 export default function Home() {
   const [url, setUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
+  const [error, setError] = useState("");
+  const [seedMessage, setSeedMessage] = useState("");
+  const [seedLoading, setSeedLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!url) return;
+    setError("");
+    setShortUrl("");
 
     try {
-      const res = await fetch("http://localhost:8080/api/shorten", {
+      const res = await fetch("/api/shorten", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ longUrl: url.trim() }),
       });
 
-      const data = await res.json();
-      setShortUrl(data.shortUrl);
+      const text = await res.text();
+      let data: { shortUrl?: string; message?: string; error?: string } = {};
+      if (text.startsWith("{") || res.headers.get("content-type")?.includes("application/json")) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          setError("Invalid response from server");
+          return;
+        }
+      }
+
+      if (!res.ok) {
+        const msg =
+          data?.error ??
+          data?.message ??
+          (text.startsWith("<") ? `Server error (${res.status})` : "Failed to shorten URL");
+        setError(msg);
+        return;
+      }
+
+      if (data.shortUrl) {
+        setShortUrl(data.shortUrl);
+      } else {
+        setError("Invalid response from server");
+      }
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  };
+
+  const handleSeed = async () => {
+    setSeedMessage("");
+    setSeedLoading(true);
+    try {
+      const res = await fetch("/api/seed", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSeedMessage(data?.error ?? data?.message ?? "Failed to seed");
+        return;
+      }
+      setSeedMessage(data?.message ?? "Dummy data added.");
+    } catch (err) {
+      setSeedMessage(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSeedLoading(false);
     }
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">
+        <h1 className="text-2xl font-bold mb-4 text-center text-black">
           URL Shortener 🔗
         </h1>
 
@@ -37,7 +83,7 @@ export default function Home() {
           placeholder="Enter your long URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full border p-3 rounded-lg mb-4"
+          className="w-full border p-3 rounded-lg mb-4 text-black"
         />
 
         <button
@@ -47,6 +93,21 @@ export default function Home() {
           Shorten URL
         </button>
 
+        <button
+          type="button"
+          onClick={handleSeed}
+          disabled={seedLoading}
+          className="w-full mt-3 border border-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+        >
+          {seedLoading ? "Seeding…" : "Seed dummy data"}
+        </button>
+
+        {seedMessage && (
+          <p className="mt-3 text-sm text-center text-gray-600">{seedMessage}</p>
+        )}
+        {error && (
+          <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+        )}
         {shortUrl && (
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-500">Short URL:</p>
