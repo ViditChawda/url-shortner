@@ -3,7 +3,8 @@ import { createClient, RedisClientType } from 'redis';
 let _client: RedisClientType | null = null;
 
 function getRedisUrl(): string {
-  const url = process.env.REDIS_URL?.trim();
+  // Strip surrounding quotes (e.g. from .env or deployment env vars)
+  const url = process.env.REDIS_URL?.trim().replace(/^["']|["']$/g, '');
   if (!url || !url.startsWith('redis')) {
     throw new Error(
       'REDIS_URL must be set (e.g. redis://localhost:6379). ' +
