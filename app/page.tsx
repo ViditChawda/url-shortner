@@ -6,8 +6,6 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
-  const [seedMessage, setSeedMessage] = useState("");
-  const [seedLoading, setSeedLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!url) return;
@@ -44,6 +42,8 @@ export default function Home() {
         setError(msg);
         return;
       }
+
+      console.log("data", data);
 
       if (data.shortUrl) {
         setShortUrl(data.shortUrl);
