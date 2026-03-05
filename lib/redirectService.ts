@@ -1,6 +1,6 @@
-import { client } from "@/lib/redis";
+
 import { prisma } from "@/lib/prisma";
-import { SetOptions } from "redis";
+import { redis } from "./redis";
 
 const CACHE_PREFIX = "url:";
 const CACHE_TTL_SECONDS = 3600; // 1 hour
@@ -19,9 +19,9 @@ export async function resolveShortCode(shortCode: string): Promise<string | null
   const cacheKey = `${CACHE_PREFIX}${code}`;
 
   // 1. Check Redis cache
-  const cachedUrl = await client.get(cacheKey);
+  const cachedUrl = await redis.get(cacheKey);
   if (cachedUrl) {
-    return cachedUrl;
+    return cachedUrl as string;
   }
 
   // 2. Query database
@@ -36,7 +36,7 @@ export async function resolveShortCode(shortCode: string): Promise<string | null
   const longUrl = urlRecord.longUrl;
 
   // 3. Cache in Redis with TTL
-  await client.set(cacheKey, longUrl, { EX: CACHE_TTL_SECONDS } as SetOptions);
+  await redis.set(cacheKey, longUrl, { ex: CACHE_TTL_SECONDS as number });
 
   // Increment use count (fire and forget)
   prisma.url
