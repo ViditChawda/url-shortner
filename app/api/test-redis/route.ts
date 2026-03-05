@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import redis, { connectRedis } from "@/lib/redis";
+import { redis } from "@/lib/redis";
 
 const TEST_KEY = "url-shortener:health-check";
 const TEST_VALUE = "ok";
 
 export async function GET() {
   try {
-    await connectRedis();
-
     // Test write
-    await redis.set(TEST_KEY, TEST_VALUE, { EX: 10 });
+    await redis.set(TEST_KEY, TEST_VALUE, { ex: 10 as number });
 
     // Test read
     const value = await redis.get(TEST_KEY);
